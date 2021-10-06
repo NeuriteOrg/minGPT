@@ -10,10 +10,10 @@ GPT model:
 import math
 import logging
 
+import deepspeed
 import torch
 
 import torch.nn as nn
-from deepspeed import deepspeed
 from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 from fairscale.nn import checkpoint_wrapper, auto_wrap, wrap
 from pytorch_lightning.plugins import DeepSpeedPlugin
