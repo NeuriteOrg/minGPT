@@ -16,6 +16,7 @@ import torch
 import torch.nn as nn
 from deepspeed.ops.adam import DeepSpeedCPUAdam
 from torch.nn import functional as F
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +142,8 @@ class GPT(pl.LightningModule):
         self.block_size = self.config.block_size
         # self.apply(self._init_weights)
 
+        self.blocks = nn.ModuleList([Block(self.config) for _ in range(self.config.n_layer)])
+
     def _init_weights(self, module):
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=0.02)
@@ -149,14 +152,6 @@ class GPT(pl.LightningModule):
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
-
-    def configure_sharded_model(self) -> None:
-        """
-        This hook allows us to setup layers within a context that auto shards the model as it is created.
-        Useful for very large models, where we want to shard instantly.
-        """
-        # transformer
-        self.blocks = nn.ModuleList([Block(self.config) for _ in range(self.config.n_layer)])
 
     def get_block_size(self):
         return self.block_size

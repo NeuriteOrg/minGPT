@@ -13,6 +13,7 @@ from torch.utils.data import Dataset, DataLoader
 from mingpt.callback import CUDACallback
 from mingpt.lr_decay import LearningRateDecayCallback
 from mingpt.model import GPT
+from pytorch_lightning.utilities.meta import init_meta_context
 
 
 class CharDataset(Dataset):
@@ -63,14 +64,15 @@ if __name__ == '__main__':
     train_dataset = CharDataset(text, args.block_size)  # one line of poem is roughly 50 characters
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.num_workers)
 
-    model = GPT(
-        vocab_size=train_dataset.vocab_size,
-        block_size=train_dataset.block_size,
-        n_layer=args.n_layer,
-        n_head=args.n_head,
-        n_embd=args.n_embd,
-        learning_rate=args.learning_rate
-    )
+    with init_meta_context():
+        model = GPT(
+            vocab_size=train_dataset.vocab_size,
+            block_size=train_dataset.block_size,
+            n_layer=args.n_layer,
+            n_head=args.n_head,
+            n_embd=args.n_embd,
+            learning_rate=args.learning_rate
+        )
 
     lr_decay = LearningRateDecayCallback(
         learning_rate=6e-4,
@@ -82,10 +84,8 @@ if __name__ == '__main__':
         args,
         max_epochs=10,
         gradient_clip_val=1.0,
-        plugins=DeepSpeedPlugin(
-            stage=3,
-            cpu_offload=True
-        ),
+        plugins=DeepSpeedPlugin(stage=3),
         callbacks=[lr_decay, CUDACallback()],
+        precision=16,
     )
     trainer.fit(model, train_loader)
