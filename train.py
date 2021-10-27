@@ -84,7 +84,7 @@ if __name__ == '__main__':
         args,
         max_epochs=10,
         gradient_clip_val=1.0,
-        plugins=DeepSpeedPlugin(stage=3),
+        strategy=DeepSpeedPlugin(stage=3),
         callbacks=[lr_decay, CUDACallback()],
         precision=16,
     )
